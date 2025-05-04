@@ -1,4 +1,4 @@
-package ray1024.userservice.model.dto;
+package ray1024.problemservice.model.request;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -9,7 +9,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Data
 @Builder
-public class UserDto {
-    private Long id;
-    private String username;
+public class TagNameRequest {
+    private String name;
 }

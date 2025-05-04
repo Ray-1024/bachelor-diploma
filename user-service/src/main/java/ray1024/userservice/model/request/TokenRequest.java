@@ -1,4 +1,4 @@
-package ray1024.userservice.model.dto;
+package ray1024.userservice.model.request;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -9,6 +9,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Data
 @Builder
-public class RefreshTokenDto {
-    private String refreshToken;
+public class TokenRequest {
+    private String token;
 }

@@ -1,15 +1,17 @@
-package ray1024.userservice.model.dto;
+package ray1024.userservice.model.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.Instant;
+
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
 @Builder
-public class UsernamePasswordDto {
-    private String username;
-    private String password;
+public class ErrorResponse {
+    private String message;
+    private Instant timestamp;
 }

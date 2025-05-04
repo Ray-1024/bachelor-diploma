@@ -1,5 +1,6 @@
 package ray1024.userservice.filter;
 
+import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -8,13 +9,10 @@ import lombok.AllArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
-import ray1024.userservice.model.entity.UserEntity;
 import ray1024.userservice.service.JwtService;
-import ray1024.userservice.service.UserService;
 
 import java.io.IOException;
 import java.util.Optional;
@@ -27,7 +25,6 @@ public class JwtFilter extends OncePerRequestFilter {
     private final static String JWT_AUTHORIZATION_PREFIX = "Bearer ";
 
     private JwtService jwtService;
-    private UserService userService;
 
     private Optional<String> parseJwt(HttpServletRequest request) {
         String headerAuth = request.getHeader(AUTHORIZATION_HEADER);
@@ -43,18 +40,16 @@ public class JwtFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         try {
             Optional<String> token = parseJwt(request);
-            if (token.isPresent() && jwtService.isJwtTokenValid(token.get())) {
-                String username = jwtService.extractUsernameFromJwtToken(token.get());
-
-                UserEntity user = userService.findByUsernameO(username).orElseThrow(() -> new UsernameNotFoundException(username));
-                Authentication authentication = new UsernamePasswordAuthenticationToken(user, null);
-
-                SecurityContextHolder.getContext().setAuthentication(authentication);
-            }
+            token.ifPresent(s -> {
+                if (jwtService.isValid(s)) {
+                    Claims claims = jwtService.getClaims(s);
+                    Authentication authentication = new UsernamePasswordAuthenticationToken(claims, s);
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                }
+            });
+            filterChain.doFilter(request, response);
         } catch (Exception e) {
             logger.error("Cannot set user authentication: {}", e);
         }
-
-        filterChain.doFilter(request, response);
     }
 }
