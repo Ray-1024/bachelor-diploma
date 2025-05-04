@@ -1,0 +1,50 @@
+package ray1024.problemservice.model.entity;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.time.Instant;
+import java.util.List;
+
+@AllArgsConstructor
+@NoArgsConstructor
+@Data
+@Builder
+@Entity
+@Table(name = "problems")
+public class Problem {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @JsonIgnore
+    @Column(nullable = false)
+    private Long authorId;
+
+    @JsonIgnore
+    @Column(nullable = false)
+    private Instant creationDate;
+
+    @Column(nullable = false)
+    private String title;
+
+    @Column(nullable = false, columnDefinition = "TEXT")
+    private String description;
+
+    @Column(nullable = false, columnDefinition = "TEXT")
+    private String input;
+
+    @Column(nullable = false, columnDefinition = "TEXT")
+    private String output;
+
+    @JsonIgnore
+    @ManyToMany
+    private List<TestCase> tests;
+
+    @ManyToMany
+    private List<Tag> tags;
+}
