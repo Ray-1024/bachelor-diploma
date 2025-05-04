@@ -1,0 +1,5 @@
+FROM openjdk:21-alpine
+LABEL authors="Ray_1024"
+WORKDIR /app
+COPY target/article-service-0.0.1-SNAPSHOT.jar /app/app.jar
+ENTRYPOINT ["java", "-jar", "app.jar"]
