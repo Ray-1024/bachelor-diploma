@@ -18,16 +18,18 @@ public class AuthController {
     @PostMapping
     public TokenResponse signUp(@RequestBody UsernamePasswordRequest usernamePasswordRequest) {
         User user = userService.create(usernamePasswordRequest.getUsername(), usernamePasswordRequest.getPassword());
+        String token = jwtService.getToken(user);
         return TokenResponse.builder()
-                .token(jwtService.getToken(user))
+                .token(token)
                 .build();
     }
 
     @PutMapping
     public TokenResponse signIn(@RequestBody UsernamePasswordRequest usernamePasswordRequest) {
         User user = userService.findByUsernameAndPassword(usernamePasswordRequest.getUsername(), usernamePasswordRequest.getPassword());
+        String token = jwtService.getToken(user);
         return TokenResponse.builder()
-                .token(jwtService.getToken(user))
+                .token(token)
                 .build();
     }
 }

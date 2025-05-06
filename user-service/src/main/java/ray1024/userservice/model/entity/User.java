@@ -33,9 +33,10 @@ public class User implements UserDetails {
     @OneToMany
     private List<Authority> authorities;
 
-
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return authorities.stream().map(authority -> new SimpleGrantedAuthority(authority.getAuthority())).collect(Collectors.toList());
+        return authorities.stream().map(authority ->
+                new SimpleGrantedAuthority(authority.getAuthority().name())
+        ).collect(Collectors.toList());
     }
 }

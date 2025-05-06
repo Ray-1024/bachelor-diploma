@@ -14,7 +14,8 @@ import lombok.NoArgsConstructor;
 @Table(name = "authorities")
 public class Authority {
     public enum AuthorityEnum {
-        
+        WRITE_ARTICLE,
+        WRITE_PROBLEM
     }
 
     @Id
@@ -22,5 +23,6 @@ public class Authority {
     private Long id;
 
     @Column(unique = true, nullable = false)
-    private String authority;
+    @Enumerated(EnumType.STRING)
+    private AuthorityEnum authority;
 }
