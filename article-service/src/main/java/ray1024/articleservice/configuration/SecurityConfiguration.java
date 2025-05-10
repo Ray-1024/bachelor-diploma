@@ -39,8 +39,7 @@ public class SecurityConfiguration {
                         .requestMatchers(GET, "/api/articles").permitAll()
                         .requestMatchers(GET, "/api/articles/{id}").permitAll()
                         .anyRequest().authenticated()
-                )/*
-                .userDetailsService(userDetailsService)*/
+                )
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
                 .exceptionHandling(c -> c
                         .authenticationEntryPoint(authenticationEntryPoint())

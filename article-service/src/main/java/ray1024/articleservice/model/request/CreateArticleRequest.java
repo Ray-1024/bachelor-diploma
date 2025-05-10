@@ -4,12 +4,16 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import ray1024.articleservice.model.entity.Article;
+
+import java.time.Instant;
+import java.util.List;
 
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
 @Builder
-public class ArticleRequest {
-    private Article article;
+public class CreateArticleRequest {
+    private String title;
+    private String article;
+    private List<String> tags;
 }

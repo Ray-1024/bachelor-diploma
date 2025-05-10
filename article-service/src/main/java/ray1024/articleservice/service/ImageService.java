@@ -2,23 +2,28 @@ package ray1024.articleservice.service;
 
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
-import lombok.AllArgsConstructor;
+import lombok.Getter;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import ray1024.articleservice.configuration.S3Configuration;
 import ray1024.articleservice.exception.ImageSavingException;
 
 import java.io.ByteArrayInputStream;
 import java.util.UUID;
 
 @Service
-@AllArgsConstructor
 public class ImageService {
-    private S3Configuration s3Config;
-    private MinioClient minioClient;
+    @Getter
+    @Value("${s3.bucket}")
+    private String bucket;
+
+    private final MinioClient minioClient;
+
+    public ImageService(MinioClient minioClient) {
+        this.minioClient = minioClient;
+    }
 
     public String saveImage(byte[] file) {
         String name = UUID.randomUUID().toString();
-        String bucket = s3Config.getBucket();
         try {
             minioClient.putObject(PutObjectArgs.builder()
                     .bucket(bucket)

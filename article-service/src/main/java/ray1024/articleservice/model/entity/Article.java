@@ -21,11 +21,9 @@ public class Article {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @JsonIgnore
     @Column(nullable = false)
     private Long authorId;
 
-    @JsonIgnore
     @Column(nullable = false)
     private Instant creationDate;
 
