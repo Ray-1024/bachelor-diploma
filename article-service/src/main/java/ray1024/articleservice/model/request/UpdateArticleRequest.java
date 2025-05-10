@@ -12,7 +12,6 @@ import java.util.List;
 @Data
 @Builder
 public class UpdateArticleRequest {
-    private Long id;
     private String title;
     private String article;
     private List<String> tags;

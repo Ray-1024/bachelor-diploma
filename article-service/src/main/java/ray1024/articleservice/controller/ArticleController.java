@@ -6,7 +6,6 @@ import lombok.AllArgsConstructor;
 import org.springframework.boot.context.properties.bind.DefaultValue;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
-import ray1024.articleservice.model.request.CreateArticleRequest;
 import ray1024.articleservice.model.request.UpdateArticleRequest;
 import ray1024.articleservice.model.response.ArticleResponse;
 import ray1024.articleservice.model.response.ArticlesResponse;
@@ -56,9 +55,8 @@ public class ArticleController {
     public ArticleResponse updateById(@PathVariable Long id,
                                       @RequestBody UpdateArticleRequest request) {
         Claims claims = (Claims) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        request.setId(id);
         return ArticleResponse.builder()
-                .article(articleService.update(claims.get("id", Long.class), request))
+                .article(articleService.update(id, claims.get("id", Long.class), request))
                 .build();
     }
 
@@ -69,7 +67,7 @@ public class ArticleController {
     }
 
     @PostMapping
-    public ArticleResponse create(@RequestBody CreateArticleRequest request) {
+    public ArticleResponse create(@RequestBody UpdateArticleRequest request) {
         Claims claims = (Claims) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         return ArticleResponse.builder()
                 .article(articleService.create(claims.get("id", Long.class), request))
