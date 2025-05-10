@@ -1,4 +1,4 @@
-FROM openjdk:21-alpine
+FROM openjdk:21-jdk-slim
 LABEL authors="Ray_1024"
 WORKDIR /app
 COPY target/article-service-0.0.1-SNAPSHOT.jar /app/app.jar
