@@ -1,4 +1,4 @@
-package ray1024.taskexecutorservice.model.entity;
+package ray1024.problemservice.model.entity;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -13,19 +13,18 @@ import java.time.Instant;
 @Data
 @Builder
 @Entity
-@Table(name = "tasks")
-public class Task {
+@Table(name = "submissions")
+public class Submission {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
-    @JoinColumn(nullable = false)
-    private User user;
+    @Column(nullable = false)
+    private Long authorId;
 
     @ManyToOne
     @JoinColumn(nullable = false)
-    private TaskStatus status;
+    private SubmissionStatus status;
 
     @Column(nullable = false)
     private Instant lastStatusChanged;

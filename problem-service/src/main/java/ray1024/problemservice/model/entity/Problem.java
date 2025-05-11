@@ -2,6 +2,8 @@ package ray1024.problemservice.model.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -40,6 +42,19 @@ public class Problem {
 
     @Column(nullable = false, columnDefinition = "TEXT")
     private String output;
+
+    @Column(nullable = false)
+    @Min(value = 0)
+    @Max(value = 536870912)
+    private Long memoryLimitBytes;
+
+    @Column(nullable = false)
+    @Min(value = 0)
+    @Max(value = 10000)
+    private Long timeLimitMilliseconds;
+
+    @ManyToMany
+    private List<TestCase> samples;
 
     @JsonIgnore
     @ManyToMany

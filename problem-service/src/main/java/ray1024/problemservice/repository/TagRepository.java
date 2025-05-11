@@ -11,5 +11,5 @@ import java.util.Optional;
 public interface TagRepository extends JpaRepository<Tag, Long> {
     Page<Tag> findAll(@NonNull Pageable pageable);
 
-    Optional<Tag> findByName(@NonNull String name);
+    Optional<Tag> findByNameIgnoreCase(@NonNull String name);
 }

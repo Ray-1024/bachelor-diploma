@@ -5,9 +5,11 @@ import lombok.NonNull;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ray1024.problemservice.client.UserServiceClient;
 import ray1024.problemservice.exception.ProblemNotFoundException;
 import ray1024.problemservice.model.entity.Problem;
+import ray1024.problemservice.model.entity.Tag;
+import ray1024.problemservice.model.entity.TestCase;
+import ray1024.problemservice.model.request.UpdateProblemRequest;
 import ray1024.problemservice.repository.ProblemRepository;
 
 import java.time.Instant;
@@ -17,36 +19,59 @@ import java.util.List;
 @Service
 public class ProblemService {
     private final ProblemRepository problemRepository;
+    private final TagService tagService;
 
-    public List<Problem> getAll(int page, int size) {
-        return problemRepository.findAll(Pageable.ofSize(size).withPage(page)).getContent();
+    public List<Problem> getAll(List<Tag> tags, int page, int size) {
+        return problemRepository.findAllByTagsContaining(tags, Pageable.ofSize(size).withPage(page)).getContent();
     }
+
+    public List<Problem> getAllByAuthorId(long authorId, List<Tag> tags, int page, int size) {
+        return problemRepository.findAllByAuthorIdAndTagsContaining(authorId, tags, Pageable.ofSize(size).withPage(page)).getContent();
+    }
+
 
     public Problem getById(long id) {
         return problemRepository.findById(id).orElseThrow(() -> new ProblemNotFoundException("Problem not found"));
     }
 
     @Transactional
-    public Problem updateById(long id, @NonNull Problem problem) {
-        Problem oldProblem = problemRepository.findById(id).orElseThrow(() -> new ProblemNotFoundException("Problem not found"));
-        oldProblem.setTitle(problem.getTitle());
-        oldProblem.setDescription(problem.getDescription());
-        oldProblem.setInput(problem.getInput());
-        oldProblem.setOutput(problem.getOutput());
-        oldProblem.setTags(problem.getTags());
-        oldProblem.setTests(problem.getTests());
+    public Problem updateById(long problemId, long authorId, @NonNull UpdateProblemRequest request) {
+        Problem oldProblem = problemRepository.findById(problemId).orElseThrow(() -> new ProblemNotFoundException("Problem not found"));
+
         return problemRepository.save(oldProblem);
     }
 
-    public void deleteById(long id) {
-        problemRepository.deleteById(id);
+    public void deleteById(long problemId, long authorId) {
+        Problem problem = problemRepository.findById(problemId).orElseThrow(() -> new ProblemNotFoundException("Problem not found"));
+        if (problem.getAuthorId() != authorId)
+            throw new ProblemNotFoundException("Problem not found");
+        problemRepository.deleteById(problemId);
     }
 
     @Transactional
-    public Problem create(long userId, @NonNull Problem problem) {
-        problem.setId(null);
-        problem.setAuthorId(userId);
-        problem.setCreationDate(Instant.now());
-        return problemRepository.save(problem);
+    public Problem create(long authorId, @NonNull UpdateProblemRequest request) {
+        return problemRepository.save(Problem.builder()
+                .id(null)
+                .input(request.getInput())
+                .authorId(authorId)
+                .title(request.getTitle())
+                .description(request.getDescription())
+                .memoryLimitBytes(request.getMemoryLimitBytes())
+                .creationDate(Instant.now())
+                .timeLimitMilliseconds(request.getTimeLimitMilliseconds())
+                .tags(tagService.fromStringTags(request.getTags()))
+                .samples(request.getSamples().stream().map(testCaseDto ->
+                        TestCase.builder()
+                                .id(null)
+                                .input(testCaseDto.getInput())
+                                .output(testCaseDto.getOutput())
+                                .build()).toList())
+                .tests(request.getTests().stream().map(testCaseDto ->
+                        TestCase.builder()
+                                .id(null)
+                                .input(testCaseDto.getInput())
+                                .output(testCaseDto.getOutput())
+                                .build()).toList())
+                .build());
     }
 }

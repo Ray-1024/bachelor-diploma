@@ -4,8 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import ray1024.problemservice.model.entity.Problem;
-import ray1024.problemservice.model.entity.Tag;
+import ray1024.problemservice.model.entity.Submission;
 
 import java.util.List;
 
@@ -13,8 +12,8 @@ import java.util.List;
 @NoArgsConstructor
 @Data
 @Builder
-public class ProblemListResponse {
-    private List<Problem> problems;
+public class SubmissionsResponse {
+    private List<SubmissionResponse> submissions;
     private Integer page;
     private Integer size;
 }

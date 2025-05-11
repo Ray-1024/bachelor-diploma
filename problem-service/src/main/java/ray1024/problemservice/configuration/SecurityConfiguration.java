@@ -22,12 +22,6 @@ import static org.springframework.http.HttpMethod.*;
 @AllArgsConstructor
 @EnableWebSecurity
 public class SecurityConfiguration {
-
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
-
     @Bean
     public AuthenticationEntryPoint authenticationEntryPoint() {
         return (request, response, authException) -> response.setStatus(HttpStatus.UNAUTHORIZED.value());
@@ -39,16 +33,17 @@ public class SecurityConfiguration {
     }
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http, UserDetailsService userDetailsService, JwtFilter jwtFilter) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity http, JwtFilter jwtFilter) throws Exception {
         return http
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(c -> c
                         .requestMatchers(GET, "/api/ping").permitAll()
-                        .requestMatchers(POST, "/api/auth").permitAll()
-                        .requestMatchers(PUT, "/api/auth").permitAll()
+                        .requestMatchers(GET, "/api/problems").permitAll()
+                        .requestMatchers(GET, "/api/problems/{problemId}").permitAll()
+                        .requestMatchers(GET, "/api/tags").permitAll()
+                        .requestMatchers(GET, "/api/tags/{tagId}").permitAll()
                         .anyRequest().authenticated()
                 )
-                .userDetailsService(userDetailsService)
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
                 .exceptionHandling(c -> c
                         .authenticationEntryPoint(authenticationEntryPoint())

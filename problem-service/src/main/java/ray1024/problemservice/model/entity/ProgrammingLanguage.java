@@ -1,4 +1,4 @@
-package ray1024.taskexecutorservice.model.entity;
+package ray1024.problemservice.model.entity;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -11,9 +11,12 @@ import lombok.NoArgsConstructor;
 @Data
 @Builder
 @Entity
-@Table(name = "problems")
-public class Problem {
+@Table(name = "programminglanguages")
+public class ProgrammingLanguage {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column(unique = true, nullable = false)
+    private String language;
 }

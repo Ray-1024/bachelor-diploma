@@ -1,4 +1,4 @@
-package ray1024.taskexecutorservice.model.entity;
+package ray1024.problemservice.service;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;

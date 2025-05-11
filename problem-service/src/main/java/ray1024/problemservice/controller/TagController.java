@@ -1,8 +1,10 @@
 package ray1024.problemservice.controller;
 
 import lombok.AllArgsConstructor;
-import org.springframework.web.bind.annotation.*;
-import ray1024.problemservice.model.request.TagNameRequest;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 import ray1024.problemservice.model.response.TagListResponse;
 import ray1024.problemservice.model.response.TagResponse;
 import ray1024.problemservice.service.TagService;
@@ -28,29 +30,10 @@ public class TagController {
                 .build();
     }
 
-    @GetMapping("/{id}")
-    public TagResponse getById(@PathVariable Long id) {
+    @GetMapping("/{tagId}")
+    public TagResponse getById(@PathVariable Long tagId) {
         return TagResponse.builder()
-                .tag(tagService.getById(id))
-                .build();
-    }
-
-    @PutMapping("/{id}")
-    public TagResponse updateById(@PathVariable Long id, @RequestBody TagNameRequest request) {
-        return TagResponse.builder()
-                .tag(tagService.updateById(id, request.getName()))
-                .build();
-    }
-
-    @DeleteMapping("/{id}")
-    public void deleteById(@PathVariable Long id) {
-        tagService.deleteById(id);
-    }
-
-    @PostMapping
-    public TagResponse create(@RequestBody TagNameRequest request) {
-        return TagResponse.builder()
-                .tag(tagService.create(request.getName()))
+                .tag(tagService.getById(tagId))
                 .build();
     }
 }

@@ -1,61 +1,90 @@
 package ray1024.problemservice.controller;
 
+import io.jsonwebtoken.Claims;
+import jakarta.websocket.server.PathParam;
 import lombok.AllArgsConstructor;
+import org.springframework.boot.context.properties.bind.DefaultValue;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
-import ray1024.problemservice.client.UserServiceClient;
-import ray1024.problemservice.model.request.ProblemRequest;
-import ray1024.problemservice.model.response.ProblemListResponse;
+import ray1024.problemservice.model.entity.Tag;
+import ray1024.problemservice.model.request.UpdateProblemRequest;
 import ray1024.problemservice.model.response.ProblemResponse;
+import ray1024.problemservice.model.response.ProblemsResponse;
 import ray1024.problemservice.service.ProblemService;
+import ray1024.problemservice.service.TagService;
 
+import java.util.List;
 import java.util.Objects;
 
 @RestController(value = "/api/problems")
 @AllArgsConstructor
 public class ProblemController {
     private final ProblemService problemService;
-    private final UserServiceClient userServiceClient;
+    private final TagService tagService;
 
     @GetMapping
-    public ProblemListResponse getAll(
-            @RequestParam(defaultValue = "1") Integer page,
-            @RequestParam(defaultValue = "5") Integer size
+    public ProblemsResponse getAll(
+            @PathParam("page") @DefaultValue("1") Integer page,
+            @PathParam("size") @DefaultValue("20") Integer size,
+            @PathParam("tags") @DefaultValue("") List<String> tags
     ) {
         if (Objects.isNull(page)) page = 1;
         if (Objects.isNull(size)) size = 5;
-        return ProblemListResponse.builder()
-                .problems(problemService.getAll(page, size))
+        List<Tag> tagList = tagService.fromStringTags(tags);
+        return ProblemsResponse.builder()
+                .problems(problemService.getAll(tagList, page, size))
                 .page(page)
                 .size(size)
                 .build();
     }
 
-    @GetMapping("/{id}")
-    public ProblemResponse getById(@PathVariable Long id) {
-        return ProblemResponse.builder()
-                .problem(problemService.getById(id))
+    @GetMapping("/author")
+    public ProblemsResponse getAllByAuthorId(
+            @PathParam("page") @DefaultValue("1") Integer page,
+            @PathParam("size") @DefaultValue("20") Integer size,
+            @PathParam("tags") @DefaultValue("") List<String> tags
+    ) {
+        if (Objects.isNull(page)) page = 1;
+        if (Objects.isNull(size)) size = 5;
+        Claims claims = (Claims) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        List<Tag> tagList = tagService.fromStringTags(tags);
+        return ProblemsResponse.builder()
+                .problems(problemService.getAllByAuthorId(
+                        claims.get("id", Long.class),
+                        tagList, page, size))
+                .page(page)
+                .size(size)
                 .build();
     }
 
-    @PutMapping("/{id}")
-    public ProblemResponse updateById(@PathVariable Long id, @RequestBody ProblemRequest request) {
+    @GetMapping("/{problemId}")
+    public ProblemResponse getById(@PathVariable Long problemId) {
         return ProblemResponse.builder()
-                .problem(problemService.updateById(id, request.getProblem()))
+                .problem(problemService.getById(problemId))
+                .build();
+    }
+
+    @PutMapping("/{problemId}")
+    public ProblemResponse updateById(@PathVariable Long problemId, @RequestBody UpdateProblemRequest request) {
+        Claims claims = (Claims) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        return ProblemResponse.builder()
+                .problem(problemService.updateById(problemId,
+                        claims.get("id", Long.class), request))
                 .build();
     }
 
     @DeleteMapping("/{id}")
     public void deleteById(@PathVariable Long id) {
-        problemService.deleteById(id);
+        Claims claims = (Claims) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        problemService.deleteById(id, claims.get("id", Long.class));
     }
 
     @PostMapping
-    public ProblemResponse create(@RequestBody ProblemRequest request,
-                                  @RequestHeader(name = "Authorization") String authorization) {
-        String token = (authorization == null || !authorization.startsWith("Bearer ")) ? "" :
-                authorization.substring(7);
+    public ProblemResponse create(@RequestBody UpdateProblemRequest request) {
+        Claims claims = (Claims) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Long id = claims.get("id", Long.class);
         return ProblemResponse.builder()
-                .problem(problemService.create(userServiceClient.getUserId(token), request.getProblem()))
+                .problem(problemService.create(id, request))
                 .build();
     }
 }
