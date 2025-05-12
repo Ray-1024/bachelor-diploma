@@ -15,8 +15,8 @@ insert into tags ("id","name") values (14,'GEOMETRY') on conflict do nothing;
 insert into tags ("id","name") values (15,'SPECIAL') on conflict do nothing;
 
 
-insert into programminglanguages ("name") values ('C++') on conflict do nothing;
-insert into programminglanguages ("name") values ('Java') on conflict do nothing;
+insert into programminglanguages ("name") values ('CPP') on conflict do nothing;
+insert into programminglanguages ("name") values ('JAVA') on conflict do nothing;
 
 
 insert into submissionstatuses ("name") values ('NEW') on conflict do nothing;
