@@ -1,24 +1,25 @@
-package ray1024.taskexecutorservice.repository;
+package ray1024.submissiontestingworker.repository;
 
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-import ray1024.taskexecutorservice.model.entity.Task;
+import ray1024.submissiontestingworker.model.entity.Submission;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 
-public interface TaskRepository extends JpaRepository<Task, Long> {
-    List<Task> getAll(Pageable pageable);
+public interface SubmissionRepository extends JpaRepository<Submission, Long> {
+    List<Submission> getAll(Pageable pageable);
 
     @Modifying
-    @Query("UPDATE Task t SET t.status = 'NEW'" +
+    @Query("UPDATE Submission t SET t.status = 'NEW'" +
             "WHERE t.status = 'TESTING' " +
             "AND t.lastStatusChanged >= :timeThreshold")
-    void dropLongTestingTasks(@Param("timeThreshold") Instant timeThreshold);
+    void dropLongTestingSubmissions(@Param("timeThreshold") Instant timeThreshold);
 
     @Query("")
-    Task reserveTask();
+    Optional<Submission> reserveSubmission();
 }

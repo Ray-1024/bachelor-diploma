@@ -1,4 +1,4 @@
-package ray1024.taskexecutorservice.model.entity;
+package ray1024.submissiontestingworker.model.entity;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -11,11 +11,12 @@ import lombok.NoArgsConstructor;
 @Data
 @Builder
 @Entity
-@Table(name = "taskstatuses")
-public class TaskStatus {
+@Table(name = "programminglanguages")
+public class ProgrammingLanguage {
 
-    public enum StatusEnum {
-        NEW, TESTING, COMPLETED
+    public enum Language {
+        CPP,
+        JAVA
     }
 
     @Id
@@ -23,6 +24,5 @@ public class TaskStatus {
     private Long id;
 
     @Column(unique = true, nullable = false)
-    @Enumerated(EnumType.STRING)
-    private StatusEnum status;
+    private String language;
 }

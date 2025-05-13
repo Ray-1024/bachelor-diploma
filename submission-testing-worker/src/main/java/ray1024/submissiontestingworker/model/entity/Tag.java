@@ -1,4 +1,4 @@
-package ray1024.taskexecutorservice.model.entity;
+package ray1024.submissiontestingworker.model.entity;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -11,18 +11,12 @@ import lombok.NoArgsConstructor;
 @Data
 @Builder
 @Entity
-@Table(name = "programminglanguages")
-public class ProgrammingLanguage {
-
-    public enum ProgrammingLanguageEnum {
-        CPP, JAVA
-    }
-
+@Table(name = "tags")
+public class Tag {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(unique = true, nullable = false)
-    @Enumerated(EnumType.STRING)
-    private ProgrammingLanguageEnum language;
+    private String name;
 }
