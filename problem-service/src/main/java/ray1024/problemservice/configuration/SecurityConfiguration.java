@@ -40,8 +40,6 @@ public class SecurityConfiguration {
                         .requestMatchers(GET, "/api/ping").permitAll()
                         .requestMatchers(GET, "/api/problems").permitAll()
                         .requestMatchers(GET, "/api/problems/{problemId}").permitAll()
-                        .requestMatchers(GET, "/api/tags").permitAll()
-                        .requestMatchers(GET, "/api/tags/{tagId}").permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)

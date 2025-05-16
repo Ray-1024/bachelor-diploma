@@ -1,0 +1,15 @@
+insert into tags ("id","name") values (1,'GRAPHS') on conflict do nothing;
+insert into tags ("id","name") values (2,'BINARY_SEARCH') on conflict do nothing;
+insert into tags ("id","name") values (3,'MATH') on conflict do nothing;
+insert into tags ("id","name") values (4,'TREES') on conflict do nothing;
+insert into tags ("id","name") values (5,'SORTINGS') on conflict do nothing;
+insert into tags ("id","name") values (6,'BITMASKS') on conflict do nothing;
+insert into tags ("id","name") values (7,'DYNAMIC_PROGRAMMING') on conflict do nothing;
+insert into tags ("id","name") values (8,'DATA_STRUCTURES') on conflict do nothing;
+insert into tags ("id","name") values (9,'DISJOINT_SET_UNION') on conflict do nothing;
+insert into tags ("id","name") values (10,'BRUTE_FORCE') on conflict do nothing;
+insert into tags ("id","name") values (11,'TWO_POINTERS') on conflict do nothing;
+insert into tags ("id","name") values (12,'FLOWS') on conflict do nothing;
+insert into tags ("id","name") values (13,'STRINGS') on conflict do nothing;
+insert into tags ("id","name") values (14,'GEOMETRY') on conflict do nothing;
+insert into tags ("id","name") values (15,'SPECIAL') on conflict do nothing;

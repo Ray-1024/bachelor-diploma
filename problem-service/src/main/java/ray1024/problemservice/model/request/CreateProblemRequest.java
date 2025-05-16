@@ -21,5 +21,5 @@ public class CreateProblemRequest {
     private Long timeLimitMilliseconds;
     private List<TestCaseDto> samples;
     private List<TestCaseDto> tests;
-    private List<String> tags;
+    private List<Long> tags;
 }

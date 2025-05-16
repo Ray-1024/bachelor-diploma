@@ -1,6 +1,5 @@
 package ray1024.articleservice.model.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -33,6 +32,8 @@ public class Article {
     @Column(nullable = false, columnDefinition = "text")
     private String article;
 
-    @ManyToMany
-    private List<Tag> tags;
+    @ElementCollection(targetClass = Long.class)
+    @CollectionTable(name = "tagids", joinColumns = @JoinColumn(name = "article_id"))
+    @Column(name = "tag", nullable = false)
+    private List<Long> tags;
 }

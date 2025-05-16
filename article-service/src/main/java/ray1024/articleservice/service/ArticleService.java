@@ -8,7 +8,6 @@ import org.springframework.stereotype.Service;
 import ray1024.articleservice.exception.ArticleNotFoundException;
 import ray1024.articleservice.exception.WrongAuthorException;
 import ray1024.articleservice.model.entity.Article;
-import ray1024.articleservice.model.entity.Tag;
 import ray1024.articleservice.model.request.UpdateArticleRequest;
 import ray1024.articleservice.repository.ArticleRepository;
 
@@ -20,9 +19,8 @@ import java.util.Objects;
 @Service
 public class ArticleService {
     private ArticleRepository articleRepository;
-    private TagService tagService;
 
-    public List<Article> getAllByTags(List<Tag> tags, int page, int size) {
+    public List<Article> getAllByTags(List<Long> tags, int page, int size) {
         return articleRepository.findAllByTagsContaining(
                 tags,
                 PageRequest.of(
@@ -34,7 +32,7 @@ public class ArticleService {
         ).getContent();
     }
 
-    public List<Article> getAllByTagsAndAuthor(Long authorId, List<Tag> tags, int page, int size) {
+    public List<Article> getAllByTagsAndAuthor(Long authorId, List<Long> tags, int page, int size) {
         return articleRepository.findAllByAuthorIdAndTagsContaining(
                 authorId,
                 tags,
@@ -60,7 +58,7 @@ public class ArticleService {
                 .creationDate(Instant.now())
                 .title(request.getTitle())
                 .article(request.getArticle())
-                .tags(tagService.fromStringTags(request.getTags()))
+                .tags(request.getTags())
                 .build());
     }
 
@@ -71,7 +69,7 @@ public class ArticleService {
         }
         old.setTitle(request.getTitle());
         old.setArticle(request.getArticle());
-        old.setTags(tagService.fromStringTags(request.getTags()));
+        old.setTags(request.getTags());
         return articleRepository.save(old);
     }
 

@@ -14,5 +14,5 @@ import java.util.List;
 public class UpdateArticleRequest {
     private String title;
     private String article;
-    private List<String> tags;
+    private List<Long> tags;
 }

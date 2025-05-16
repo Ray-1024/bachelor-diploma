@@ -2,10 +2,46 @@ version: '3.9'
 
 services:
 
-  postgresql:
+  postgresql_articles:
     image: postgres:15-alpine
     ports:
       - "5432:5432"
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    networks:
+      - backend_network
+
+
+  postgresql_problems:
+    image: postgres:15-alpine
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    networks:
+      - backend_network
+
+
+  postgresql_tags:
+    image: postgres:15-alpine
+    ports:
+      - "5434:5432"
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    networks:
+      - backend_network
+
+
+  postgresql_users:
+    image: postgres:15-alpine
+    ports:
+      - "5435:5432"
     environment:
       POSTGRES_DB: postgres
       POSTGRES_USER: postgres
@@ -66,8 +102,7 @@ services:
     build: ./article-service
     container_name: article-service
     depends_on:
-      - postgresql
-      - minio
+      - postgresql_articles
       - consul
       - haproxy
     restart: always
@@ -82,21 +117,35 @@ services:
     container_name: frontend
     restart: always
     ports:
-      - "20000:8080"
+      - "15000:8080"
     networks:
       - frontend_network
+
+
+  image-service:
+    build: ./image-service
+    container_name: image-service
+    depends_on:
+      - minio
+      - consul
+      - haproxy
+    restart: always
+    ports:
+      - "20000:8080"
+    networks:
+      - backend_network
 
 
   problem-service:
     build: ./problem-service
     container_name: problem-service
     depends_on:
-      - postgresql
+      - postgresql_problems
       - consul
       - haproxy
     restart: always
     ports:
-      - "30000:8080"
+      - "25000:8080"
     networks:
       - backend_network
 
@@ -105,24 +154,34 @@ services:
     build: ./submission-testing-worker
     container_name: submission-testing-worker-service
     depends_on:
-      - postgresql
+      - postgresql_problems
     restart: always
-    ports:
-      - "40000:8080"
     networks:
       - backend_network
 
+  tag-service:
+    build: ./tag-service
+    container_name: tag-service
+    depends_on:
+      - postgresql_tags
+      - consul
+      - haproxy
+    restart: always
+    ports:
+      - "30000:8080"
+    networks:
+      - backend_network
 
   user-service:
     build: ./user-service
     container_name: user-service
     depends_on:
-      - postgresql
+      - postgresql_users
       - consul
       - haproxy
     restart: always
     ports:
-      - "50000:8080"
+      - "35000:8080"
     networks:
       - backend_network
 
@@ -133,6 +192,5 @@ volumes:
 networks:
   backend_network:
     driver: bridge
-  #    internal: true
   frontend_network:
     driver: bridge

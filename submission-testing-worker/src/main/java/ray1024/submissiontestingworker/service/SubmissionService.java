@@ -9,6 +9,7 @@ import ray1024.submissiontestingworker.repository.SubmissionRepository;
 import ray1024.submissiontestingworker.repository.SubmissionStatusRepository;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
@@ -18,19 +19,26 @@ import java.util.Objects;
 @AllArgsConstructor
 @Service
 public class SubmissionService {
-    private static final String PREFIX = "./submissions/";
-    private static final String WORKDIR_REMOVE = "rm -rf %s";
+    private static final String WORKDIR = "/submissions/%s/";
+    private static final String WORKDIR_FILE = WORKDIR + "%s";
+    private static final String WORKDIR_REMOVE_COMMAND = "rm -rf " + WORKDIR;
+
+    private static final String APPARMOR_PROFILE_FILE = "/etc/apparmor.d/%s";
+    private static final String APPARMOR_GENERATE_PROFILE_COMMAND = "aa-genprof %s";
+    private static final String APPARMOR_DEACTIVATE_PROFILE_COMMAND = "aa-disable %s";
+    private static final String APPARMOR_REMOVE_PROFILE_COMMAND = "rm " + APPARMOR_PROFILE_FILE;
+
     private static final String INPUT_FILE = "input.txt";
     private static final String OUTPUT_FILE = "output.txt";
     private static final String STREAMS_REDIRECTING = "%s>&0 &1>%s &2>/dev/null".formatted(INPUT_FILE, OUTPUT_FILE);
 
-    private static final String CPP_SOURCE_CODE_FILENAME = "main.cpp";
-    private static final String CPP_PROGRAM_FILENAME = "main";
-    private static final String CPP_COMPILE = "g++ -o %s %s";
-    private static final String CPP_RUN = "./%s " + STREAMS_REDIRECTING;
+    private static final String CPP_SOURCE_CODE_FILE = "main.cpp";
+    private static final String CPP_PROGRAM_FILE = "main";
+    private static final String CPP_COMPILE_COMMAND = "g++ -o %s %s";
+    private static final String CPP_RUN_COMMAND = "./%s " + STREAMS_REDIRECTING;
 
-    private static final String JAVA_SOURCE_CODE_FILENAME = "Main.java";
-    private static final String JAVA_RUN = "java %s " + STREAMS_REDIRECTING;
+    private static final String JAVA_SOURCE_CODE_FILE = "Main.java";
+    private static final String JAVA_RUN_COMMAND = "java %s " + STREAMS_REDIRECTING;
 
     private final SubmissionRepository submissionRepository;
     private final SubmissionStatusRepository submissionStatusRepository;
@@ -46,18 +54,9 @@ public class SubmissionService {
         submissionRepository.save(submission);
     }
 
-    private String workDir(Submission submission) {
-        return "%s%d".formatted(PREFIX, submission.getId());
-    }
-
-    private String workDirFile(Submission submission, String filename) {
-        return "%s/%s".formatted(workDir(submission), filename);
-    }
-
-
     private void createWorkDirectory(Submission submission) {
         try {
-            new File(workDir(submission)).mkdirs();
+            new File(WORKDIR.formatted(submission.getId().toString())).mkdirs();
         } catch (Exception e) {
             changeStatus(submission, SubmissionStatus.Status.RUNTIME_ERROR);
         }
@@ -66,7 +65,7 @@ public class SubmissionService {
     private void cleanUp(Submission submission) {
         try {
             Runtime.getRuntime().exec(new String[]{
-                    WORKDIR_REMOVE.formatted(workDir(submission))
+                    WORKDIR_REMOVE_COMMAND.formatted(submission.getId().toString()),
             });
         } catch (Exception exception) {
             changeStatus(submission, SubmissionStatus.Status.RUNTIME_ERROR);
@@ -86,13 +85,13 @@ public class SubmissionService {
             compileLimitsActivate(submission);
             switch (submission.getLanguage().getLanguage()) {
                 case "CPP" -> {
-                    Files.writeString(Path.of(workDirFile(submission, CPP_SOURCE_CODE_FILENAME)), submission.getSourceCode());
+                    Files.writeString(Path.of(WORKDIR_FILE.formatted(submission.getId().toString(), CPP_SOURCE_CODE_FILE)), submission.getSourceCode());
                     Runtime.getRuntime().exec(new String[]{
-                            CPP_COMPILE.formatted(workDirFile(submission, CPP_PROGRAM_FILENAME), workDirFile(submission, CPP_SOURCE_CODE_FILENAME))
+                            CPP_COMPILE_COMMAND.formatted(workDirFile(submission, CPP_PROGRAM_FILE), workDirFile(submission, CPP_SOURCE_CODE_FILE))
                     });
                 }
                 case "JAVA" ->
-                        Files.writeString(Path.of(workDirFile(submission, JAVA_SOURCE_CODE_FILENAME)), submission.getSourceCode());
+                        Files.writeString(Path.of(workDirFile(submission, JAVA_SOURCE_CODE_FILE)), submission.getSourceCode());
                 default -> throw new UnsupportedOperationException("Unsupported language: " + submission.getLanguage());
             }
             compileLimitsDeactivate(submission);
@@ -101,7 +100,25 @@ public class SubmissionService {
         }
     }
 
-    private void testLimitsActivate(Submission submission) {
+    private String cppAppArmorTestConfig(Submission submission) {
+        return new StringBuilder()
+                .append("abi <abi/3.0>,").append('\n')
+                .append("include <tunables/global>").append('\n')
+                .append(workDirFile(submission, CPP_PROGRAM_FILE)).append(" {\n")
+                .append("\tinclude <abstractions/base>").append('\n')
+                .append("\tinclude <abstractions/bash>").append('\n')
+                .append('\t').append(workDirFile(submission, CPP_PROGRAM_FILE)).append(" ix,\n")
+                .append('\t').append(workDirFile(submission, INPUT_FILE)).append(" r,\n")
+                .append('\t').append(workDirFile(submission, OUTPUT_FILE)).append(" w,\n")
+                .append("\t}\n")
+                .toString();
+    }
+
+    private void testLimitsActivate(Submission submission) throws IOException {
+        Runtime.getRuntime().exec(new String[]{
+                "aa-genprof " + workDirFile(submission, JAVA_SOURCE_CODE_FILE)
+        });
+        Files.writeString(Path.of(workDirFile(submission, JAVA_SOURCE_CODE_FILE).replace('/', '.')), submission.getSourceCode());
 
     }
 
@@ -118,10 +135,10 @@ public class SubmissionService {
 
                 switch (submission.getLanguage().getLanguage()) {
                     case "CPP" -> Runtime.getRuntime().exec(new String[]{
-                            CPP_RUN.formatted(workDirFile(submission, CPP_PROGRAM_FILENAME))
+                            CPP_RUN_COMMAND.formatted(workDirFile(submission, CPP_PROGRAM_FILE))
                     });
                     case "JAVA" -> Runtime.getRuntime().exec(new String[]{
-                            JAVA_RUN.formatted(workDirFile(submission, JAVA_SOURCE_CODE_FILENAME))
+                            JAVA_RUN_COMMAND.formatted(workDirFile(submission, JAVA_SOURCE_CODE_FILE))
                     });
                     default ->
                             throw new UnsupportedOperationException("Unsupported language: " + submission.getLanguage());

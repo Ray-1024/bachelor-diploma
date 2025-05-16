@@ -6,12 +6,10 @@ import lombok.AllArgsConstructor;
 import org.springframework.boot.context.properties.bind.DefaultValue;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
-import ray1024.problemservice.model.entity.Tag;
 import ray1024.problemservice.model.request.UpdateProblemRequest;
 import ray1024.problemservice.model.response.ProblemResponse;
 import ray1024.problemservice.model.response.ProblemsResponse;
 import ray1024.problemservice.service.ProblemService;
-import ray1024.problemservice.service.TagService;
 
 import java.util.List;
 import java.util.Objects;
@@ -20,19 +18,17 @@ import java.util.Objects;
 @AllArgsConstructor
 public class ProblemController {
     private final ProblemService problemService;
-    private final TagService tagService;
 
     @GetMapping
     public ProblemsResponse getAll(
             @PathParam("page") @DefaultValue("1") Integer page,
             @PathParam("size") @DefaultValue("20") Integer size,
-            @PathParam("tags") @DefaultValue("") List<String> tags
+            @PathParam("tags") @DefaultValue("") List<Long> tags
     ) {
         if (Objects.isNull(page)) page = 1;
         if (Objects.isNull(size)) size = 5;
-        List<Tag> tagList = tagService.fromStringTags(tags);
         return ProblemsResponse.builder()
-                .problems(problemService.getAll(tagList, page, size))
+                .problems(problemService.getAll(tags, page, size))
                 .page(page)
                 .size(size)
                 .build();
@@ -42,16 +38,15 @@ public class ProblemController {
     public ProblemsResponse getAllByAuthorId(
             @PathParam("page") @DefaultValue("1") Integer page,
             @PathParam("size") @DefaultValue("20") Integer size,
-            @PathParam("tags") @DefaultValue("") List<String> tags
+            @PathParam("tags") @DefaultValue("") List<Long> tags
     ) {
         if (Objects.isNull(page)) page = 1;
         if (Objects.isNull(size)) size = 5;
         Claims claims = (Claims) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        List<Tag> tagList = tagService.fromStringTags(tags);
         return ProblemsResponse.builder()
                 .problems(problemService.getAllByAuthorId(
                         claims.get("id", Long.class),
-                        tagList, page, size))
+                        tags, page, size))
                 .page(page)
                 .size(size)
                 .build();

@@ -7,7 +7,6 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import ray1024.articleservice.exception.ArticleAlreadyExistsException;
 import ray1024.articleservice.exception.ArticleNotFoundException;
-import ray1024.articleservice.exception.ImageSavingException;
 import ray1024.articleservice.exception.WrongAuthorException;
 import ray1024.articleservice.model.response.ErrorResponse;
 
@@ -30,17 +29,6 @@ public class ErrorsHandler {
     @ExceptionHandler(ArticleAlreadyExistsException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     ResponseEntity<ErrorResponse> handleArticleAlreadyExists(final ArticleAlreadyExistsException ex) {
-        return ResponseEntity.ofNullable(
-                ErrorResponse.builder()
-                        .message(ex.getMessage())
-                        .timestamp(Instant.now())
-                        .build()
-        );
-    }
-
-    @ExceptionHandler(ImageSavingException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    ResponseEntity<ErrorResponse> handleImageSaving(final ImageSavingException ex) {
         return ResponseEntity.ofNullable(
                 ErrorResponse.builder()
                         .message(ex.getMessage())

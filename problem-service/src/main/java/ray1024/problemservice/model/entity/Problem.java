@@ -60,6 +60,8 @@ public class Problem {
     @ManyToMany
     private List<TestCase> tests;
 
-    @ManyToMany
-    private List<Tag> tags;
+    @ElementCollection(targetClass = Long.class)
+    @CollectionTable(name = "tagids", joinColumns = @JoinColumn(name = "problem_id"))
+    @Column(name = "tag", nullable = false)
+    private List<Long> tags;
 }

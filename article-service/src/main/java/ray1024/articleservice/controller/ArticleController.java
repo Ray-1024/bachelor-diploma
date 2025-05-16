@@ -10,7 +10,6 @@ import ray1024.articleservice.model.request.UpdateArticleRequest;
 import ray1024.articleservice.model.response.ArticleResponse;
 import ray1024.articleservice.model.response.ArticlesResponse;
 import ray1024.articleservice.service.ArticleService;
-import ray1024.articleservice.service.TagService;
 
 import java.util.List;
 
@@ -18,16 +17,15 @@ import java.util.List;
 @AllArgsConstructor
 public class ArticleController {
     private ArticleService articleService;
-    private TagService tagService;
 
     @GetMapping
     public ArticlesResponse getAll(
             @PathParam("page") @DefaultValue("1") Integer page,
             @PathParam("size") @DefaultValue("20") Integer size,
-            @PathParam("tags") @DefaultValue("") List<String> tags
+            @PathParam("tags") @DefaultValue("") List<Long> tags
     ) {
         return ArticlesResponse.builder()
-                .articles(articleService.getAllByTags(tagService.fromStringTags(tags), page, size))
+                .articles(articleService.getAllByTags(tags, page, size))
                 .build();
     }
 
@@ -40,7 +38,7 @@ public class ArticleController {
         Claims claims = (Claims) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         return ArticlesResponse.builder()
                 .articles(articleService.getAllByTagsAndAuthor(
-                        claims.get("id", Long.class), tagService.fromStringTags(tags), page, size))
+                        claims.get("id", Long.class),tags, page, size))
                 .build();
     }
 
