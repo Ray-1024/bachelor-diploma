@@ -33,12 +33,12 @@ public class ArticleController {
     public ArticlesResponse getAllByUser(
             @PathParam("page") @DefaultValue("1") Integer page,
             @PathParam("size") @DefaultValue("20") Integer size,
-            @PathParam("tags") @DefaultValue("") List<String> tags
+            @PathParam("tags") @DefaultValue("") List<Long> tags
     ) {
         Claims claims = (Claims) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         return ArticlesResponse.builder()
                 .articles(articleService.getAllByTagsAndAuthor(
-                        claims.get("id", Long.class),tags, page, size))
+                        claims.get("id", Long.class), tags, page, size))
                 .build();
     }
 
@@ -68,7 +68,9 @@ public class ArticleController {
     public ArticleResponse create(@RequestBody UpdateArticleRequest request) {
         Claims claims = (Claims) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         return ArticleResponse.builder()
-                .article(articleService.create(claims.get("id", Long.class), request))
+                .article(articleService.create(claims.get("id", Long.class),
+                        claims.get("username", String.class),
+                        request))
                 .build();
     }
 }

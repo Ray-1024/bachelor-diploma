@@ -51,10 +51,11 @@ public class ArticleService {
                 .orElseThrow(() -> new ArticleNotFoundException(String.valueOf(id)));
     }
 
-    public Article create(long userId, @NonNull UpdateArticleRequest request) {
+    public Article create(long userId, @NonNull String authorUsername, @NonNull UpdateArticleRequest request) {
         return articleRepository.save(Article.builder()
                 .id(null)
                 .authorId(userId)
+                .authorUsername(authorUsername)
                 .creationDate(Instant.now())
                 .title(request.getTitle())
                 .article(request.getArticle())

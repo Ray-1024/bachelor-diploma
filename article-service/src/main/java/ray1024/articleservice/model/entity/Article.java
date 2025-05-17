@@ -24,6 +24,9 @@ public class Article {
     private Long authorId;
 
     @Column(nullable = false)
+    private String authorUsername;
+
+    @Column(nullable = false)
     private Instant creationDate;
 
     @Column(nullable = false)
