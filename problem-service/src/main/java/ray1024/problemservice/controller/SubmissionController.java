@@ -12,7 +12,7 @@ import ray1024.problemservice.service.SubmissionService;
 
 import java.util.Objects;
 
-@RestController(value = "/api/problems/{problemId}/submissions")
+@RestController
 @AllArgsConstructor
 public class SubmissionController {
     private final SubmissionService submissionService;
@@ -26,7 +26,7 @@ public class SubmissionController {
                 .build();
     }
 
-    @GetMapping
+    @GetMapping("/api/problems/{problemId}/submissions")
     public SubmissionsResponse getAll(
             @PathVariable Long problemId,
             @RequestParam(defaultValue = "1") Integer page,
@@ -36,19 +36,33 @@ public class SubmissionController {
         if (Objects.isNull(size)) size = 5;
         Claims claims = (Claims) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         return SubmissionsResponse.builder()
-                .submissions(submissionService.getAll(problemId, claims.get("id", Long.class), page, size).stream()
+                .submissions(submissionService.getAllByProblemIdAndAuthorId(problemId, claims.get("id", Long.class), page, size).stream()
                         .map(this::fromEntity).toList())
                 .page(page)
                 .size(size)
                 .build();
     }
 
-    @PostMapping
+    @PostMapping("/api/problems/{problemId}/submissions")
     public SubmissionResponse create(
             @PathVariable Long problemId,
             @RequestBody CreateSubmissionRequest request) {
         Claims claims = (Claims) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         Long authorId = claims.get("id", Long.class);
         return fromEntity(submissionService.create(problemId, authorId, request));
+    }
+
+    @GetMapping("/api/submissions/author")
+    public SubmissionsResponse getAllByAuthorId(@RequestParam(defaultValue = "1") Integer page,
+                                                @RequestParam(defaultValue = "5") Integer size) {
+        if (Objects.isNull(page)) page = 1;
+        if (Objects.isNull(size)) size = 5;
+        Claims claims = (Claims) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        return SubmissionsResponse.builder()
+                .submissions(submissionService.getAllByAuthorId(claims.get("id", Long.class), page, size).stream()
+                        .map(this::fromEntity).toList())
+                .page(page)
+                .size(size)
+                .build();
     }
 }

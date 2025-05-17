@@ -25,6 +25,7 @@ public class SubmissionService {
 
     private static final String APPARMOR_PROFILE_FILE = "/etc/apparmor.d/%s";
     private static final String APPARMOR_GENERATE_PROFILE_COMMAND = "aa-genprof %s";
+    private static final String APPARMOR_ACTIVATE_PROFILE_COMMAND = "aa-enforce %s";
     private static final String APPARMOR_DEACTIVATE_PROFILE_COMMAND = "aa-disable %s";
     private static final String APPARMOR_REMOVE_PROFILE_COMMAND = "rm " + APPARMOR_PROFILE_FILE;
 
@@ -87,11 +88,11 @@ public class SubmissionService {
                 case "CPP" -> {
                     Files.writeString(Path.of(WORKDIR_FILE.formatted(submission.getId().toString(), CPP_SOURCE_CODE_FILE)), submission.getSourceCode());
                     Runtime.getRuntime().exec(new String[]{
-                            CPP_COMPILE_COMMAND.formatted(workDirFile(submission, CPP_PROGRAM_FILE), workDirFile(submission, CPP_SOURCE_CODE_FILE))
+                            CPP_COMPILE_COMMAND.formatted(WORKDIR_FILE.formatted(submission.getId().toString(), CPP_PROGRAM_FILE), WORKDIR_FILE.formatted(submission.getId().toString(), CPP_SOURCE_CODE_FILE))
                     });
                 }
                 case "JAVA" ->
-                        Files.writeString(Path.of(workDirFile(submission, JAVA_SOURCE_CODE_FILE)), submission.getSourceCode());
+                        Files.writeString(Path.of(WORKDIR_FILE.formatted(submission.getId().toString(), JAVA_SOURCE_CODE_FILE)), submission.getSourceCode());
                 default -> throw new UnsupportedOperationException("Unsupported language: " + submission.getLanguage());
             }
             compileLimitsDeactivate(submission);
@@ -104,21 +105,21 @@ public class SubmissionService {
         return new StringBuilder()
                 .append("abi <abi/3.0>,").append('\n')
                 .append("include <tunables/global>").append('\n')
-                .append(workDirFile(submission, CPP_PROGRAM_FILE)).append(" {\n")
+                .append(WORKDIR_FILE.formatted(submission.getId().toString(), CPP_PROGRAM_FILE)).append(" {\n")
                 .append("\tinclude <abstractions/base>").append('\n')
                 .append("\tinclude <abstractions/bash>").append('\n')
-                .append('\t').append(workDirFile(submission, CPP_PROGRAM_FILE)).append(" ix,\n")
-                .append('\t').append(workDirFile(submission, INPUT_FILE)).append(" r,\n")
-                .append('\t').append(workDirFile(submission, OUTPUT_FILE)).append(" w,\n")
+                .append('\t').append(WORKDIR_FILE.formatted(submission.getId().toString(), CPP_PROGRAM_FILE)).append(" ix,\n")
+                .append('\t').append(WORKDIR_FILE.formatted(submission.getId().toString(), INPUT_FILE)).append(" r,\n")
+                .append('\t').append(WORKDIR_FILE.formatted(submission.getId().toString(), OUTPUT_FILE)).append(" w,\n")
                 .append("\t}\n")
                 .toString();
     }
 
     private void testLimitsActivate(Submission submission) throws IOException {
         Runtime.getRuntime().exec(new String[]{
-                "aa-genprof " + workDirFile(submission, JAVA_SOURCE_CODE_FILE)
+                "aa-genprof " + WORKDIR_FILE.formatted(submission.getId().toString(), JAVA_SOURCE_CODE_FILE)
         });
-        Files.writeString(Path.of(workDirFile(submission, JAVA_SOURCE_CODE_FILE).replace('/', '.')), submission.getSourceCode());
+        Files.writeString(Path.of(WORKDIR_FILE.formatted(submission.getId().toString(), JAVA_SOURCE_CODE_FILE).replace('/', '.')), submission.getSourceCode());
 
     }
 
@@ -131,20 +132,20 @@ public class SubmissionService {
             testLimitsActivate(submission);
             SubmissionStatus.Status status = null;
             for (TestCase aCase : submission.getProblem().getTests()) {
-                Files.writeString(Path.of(workDirFile(submission, INPUT_FILE)), aCase.getInput());
+                Files.writeString(Path.of(WORKDIR_FILE.formatted(submission.getId().toString(), INPUT_FILE)), aCase.getInput());
 
                 switch (submission.getLanguage().getLanguage()) {
                     case "CPP" -> Runtime.getRuntime().exec(new String[]{
-                            CPP_RUN_COMMAND.formatted(workDirFile(submission, CPP_PROGRAM_FILE))
+                            CPP_RUN_COMMAND.formatted(WORKDIR_FILE.formatted(submission.getId().toString(), CPP_PROGRAM_FILE))
                     });
                     case "JAVA" -> Runtime.getRuntime().exec(new String[]{
-                            JAVA_RUN_COMMAND.formatted(workDirFile(submission, JAVA_SOURCE_CODE_FILE))
+                            JAVA_RUN_COMMAND.formatted(WORKDIR_FILE.formatted(submission.getId().toString(), JAVA_SOURCE_CODE_FILE))
                     });
                     default ->
                             throw new UnsupportedOperationException("Unsupported language: " + submission.getLanguage());
                 }
                 String outputTxt;
-                outputTxt = Files.readString(Path.of(workDirFile(submission, OUTPUT_FILE)));
+                outputTxt = Files.readString(Path.of(WORKDIR_FILE.formatted(submission.getId().toString(), OUTPUT_FILE)));
                 if (!Objects.equals(outputTxt, aCase.getOutput())) {
                     status = SubmissionStatus.Status.WRONG_ANSWER;
                     break;

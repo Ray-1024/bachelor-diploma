@@ -25,9 +25,14 @@ public class SubmissionService {
     private final SubmissionStatusRepository submissionStatusRepository;
     private final ProgrammingLanguageRepository programmingLanguageRepository;
 
-    public List<Submission> getAll(long problemId, long authorId, int page, int size) {
+    public List<Submission> getAllByProblemIdAndAuthorId(long problemId, long authorId, int page, int size) {
         return submissionRepository.findAllByAuthorIdAndProblemId(authorId, problemId, Pageable.ofSize(size).withPage(page)).getContent();
     }
+
+    public List<Submission> getAllByAuthorId(long authorId, int page, int size) {
+        return submissionRepository.findAllByAuthorId(authorId, Pageable.ofSize(size).withPage(page)).getContent();
+    }
+
 
     @Transactional
     public Submission create(long problemId, long authorId, @NonNull CreateSubmissionRequest request) {
