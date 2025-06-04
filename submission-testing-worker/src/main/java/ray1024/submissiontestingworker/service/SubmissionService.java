@@ -2,6 +2,7 @@ package ray1024.submissiontestingworker.service;
 
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ray1024.submissiontestingworker.model.entity.Submission;
 import ray1024.submissiontestingworker.model.entity.SubmissionStatus;
 import ray1024.submissiontestingworker.model.entity.TestCase;
@@ -15,23 +16,23 @@ import java.nio.file.Path;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Objects;
+import java.util.Optional;
 
 @AllArgsConstructor
 @Service
 public class SubmissionService {
     private static final String WORKDIR = "/submissions/%s/";
     private static final String WORKDIR_FILE = WORKDIR + "%s";
+    private static final String REMOVE_COMMAND = "rm -rf %s";
     private static final String WORKDIR_REMOVE_COMMAND = "rm -rf " + WORKDIR;
 
     private static final String APPARMOR_PROFILE_FILE = "/etc/apparmor.d/%s";
-    private static final String APPARMOR_GENERATE_PROFILE_COMMAND = "aa-genprof %s";
     private static final String APPARMOR_ACTIVATE_PROFILE_COMMAND = "aa-enforce %s";
     private static final String APPARMOR_DEACTIVATE_PROFILE_COMMAND = "aa-disable %s";
-    private static final String APPARMOR_REMOVE_PROFILE_COMMAND = "rm " + APPARMOR_PROFILE_FILE;
 
     private static final String INPUT_FILE = "input.txt";
     private static final String OUTPUT_FILE = "output.txt";
-    private static final String STREAMS_REDIRECTING = "%s>&0 &1>%s &2>/dev/null".formatted(INPUT_FILE, OUTPUT_FILE);
+    private static final String STREAMS_REDIRECTING = "<%s >%s 2>/dev/null".formatted(INPUT_FILE, OUTPUT_FILE);
 
     private static final String CPP_SOURCE_CODE_FILE = "main.cpp";
     private static final String CPP_PROGRAM_FILE = "main";
@@ -41,14 +42,16 @@ public class SubmissionService {
     private static final String JAVA_SOURCE_CODE_FILE = "Main.java";
     private static final String JAVA_RUN_COMMAND = "java %s " + STREAMS_REDIRECTING;
 
+    private static final String ULIMIT_COMMAND = "ulimit -t %s -v %s";
+
     private final SubmissionRepository submissionRepository;
     private final SubmissionStatusRepository submissionStatusRepository;
 
-    public void dropLongTestingSubmissions() {
-        submissionRepository.dropLongTestingSubmissions(Instant.now().minus(30, ChronoUnit.SECONDS));
+    public void flushLongTestingSubmissions() {
+        submissionRepository.flushLongTestingSubmissions(Instant.now().minus(30, ChronoUnit.SECONDS));
     }
 
-    private void changeStatus(Submission submission, SubmissionStatus.Status statusEnum) {
+    protected void changeStatus(Submission submission, SubmissionStatus.Status statusEnum) {
         SubmissionStatus status = submissionStatusRepository.findByStatus(statusEnum.name()).orElseThrow(RuntimeException::new);
         submission.setStatus(status);
         submission.setLastStatusChanged(Instant.now());
@@ -73,17 +76,8 @@ public class SubmissionService {
         }
     }
 
-    private void compileLimitsActivate(Submission submission) {
-
-    }
-
-    private void compileLimitsDeactivate(Submission submission) {
-
-    }
-
     private void compile(Submission submission) {
         try {
-            compileLimitsActivate(submission);
             switch (submission.getLanguage().getLanguage()) {
                 case "CPP" -> {
                     Files.writeString(Path.of(WORKDIR_FILE.formatted(submission.getId().toString(), CPP_SOURCE_CODE_FILE)), submission.getSourceCode());
@@ -95,13 +89,12 @@ public class SubmissionService {
                         Files.writeString(Path.of(WORKDIR_FILE.formatted(submission.getId().toString(), JAVA_SOURCE_CODE_FILE)), submission.getSourceCode());
                 default -> throw new UnsupportedOperationException("Unsupported language: " + submission.getLanguage());
             }
-            compileLimitsDeactivate(submission);
         } catch (Exception ignored) {
             changeStatus(submission, SubmissionStatus.Status.COMPILE_ERROR);
         }
     }
 
-    private String cppAppArmorTestConfig(Submission submission) {
+    private String cppAppArmorConfig(Submission submission) {
         return new StringBuilder()
                 .append("abi <abi/3.0>,").append('\n')
                 .append("include <tunables/global>").append('\n')
@@ -115,16 +108,69 @@ public class SubmissionService {
                 .toString();
     }
 
-    private void testLimitsActivate(Submission submission) throws IOException {
-        Runtime.getRuntime().exec(new String[]{
-                "aa-genprof " + WORKDIR_FILE.formatted(submission.getId().toString(), JAVA_SOURCE_CODE_FILE)
-        });
-        Files.writeString(Path.of(WORKDIR_FILE.formatted(submission.getId().toString(), JAVA_SOURCE_CODE_FILE).replace('/', '.')), submission.getSourceCode());
-
+    private String javaAppArmorConfig(Submission submission) {
+        return new StringBuilder()
+                .append("abi <abi/3.0>,").append('\n')
+                .append("include <tunables/global>").append('\n')
+                .append(WORKDIR_FILE.formatted(submission.getId().toString(), JAVA_SOURCE_CODE_FILE)).append(" {\n")
+                .append("\tinclude <abstractions/base>").append('\n')
+                .append("\tinclude <abstractions/bash>").append('\n')
+                .append('\t').append(WORKDIR_FILE.formatted(submission.getId().toString(), JAVA_SOURCE_CODE_FILE)).append(" ix,\n")
+                .append('\t').append(WORKDIR_FILE.formatted(submission.getId().toString(), INPUT_FILE)).append(" r,\n")
+                .append('\t').append(WORKDIR_FILE.formatted(submission.getId().toString(), OUTPUT_FILE)).append(" w,\n")
+                .append("\t}\n")
+                .toString();
     }
 
-    private void testLimitsDeactivate(Submission submission) {
+    private void testLimitsActivate(Submission submission) throws IOException {
+        switch (submission.getLanguage().getLanguage()) {
+            case "JAVA" -> {
+                String filename = WORKDIR_FILE.formatted(submission.getId().toString(), JAVA_SOURCE_CODE_FILE);
+                String profileName = filename.replace('/', '.');
+                Files.writeString(Path.of(APPARMOR_PROFILE_FILE.formatted(profileName)), javaAppArmorConfig(submission));
+                Runtime.getRuntime().exec(new String[]{
+                        APPARMOR_ACTIVATE_PROFILE_COMMAND.formatted(filename),
+                });
+            }
+            case "CPP" -> {
+                String filename = WORKDIR_FILE.formatted(submission.getId().toString(), CPP_PROGRAM_FILE);
+                String profileName = filename.replace('/', '.');
+                Files.writeString(Path.of(APPARMOR_PROFILE_FILE.formatted(profileName)), cppAppArmorConfig(submission));
+                Runtime.getRuntime().exec(new String[]{
+                        APPARMOR_ACTIVATE_PROFILE_COMMAND.formatted(filename),
+                });
+            }
+            default -> throw new UnsupportedOperationException("Unsupported language: " + submission.getLanguage());
+        }
+    }
 
+    private void testLimitsDeactivate(Submission submission) throws IOException {
+        switch (submission.getLanguage().getLanguage()) {
+            case "JAVA" -> {
+                String filename = WORKDIR_FILE.formatted(submission.getId().toString(), JAVA_SOURCE_CODE_FILE);
+                String profileName = filename.replace('/', '.');
+                Runtime.getRuntime().exec(new String[]{
+                        APPARMOR_DEACTIVATE_PROFILE_COMMAND.formatted(filename),
+                        REMOVE_COMMAND.formatted(APPARMOR_PROFILE_FILE.formatted(profileName))
+                });
+            }
+            case "CPP" -> {
+                String filename = WORKDIR_FILE.formatted(submission.getId().toString(), CPP_PROGRAM_FILE);
+                String profileName = filename.replace('/', '.');
+                Runtime.getRuntime().exec(new String[]{
+                        APPARMOR_DEACTIVATE_PROFILE_COMMAND.formatted(filename),
+                        REMOVE_COMMAND.formatted(APPARMOR_PROFILE_FILE.formatted(profileName))
+                });
+            }
+            default -> throw new UnsupportedOperationException("Unsupported language: " + submission.getLanguage());
+        }
+    }
+
+    private String limitsCommand(Submission submission) {
+        return ULIMIT_COMMAND.formatted(
+                String.valueOf((submission.getProblem().getTimeLimitMilliseconds() + 999) / 1000),
+                String.valueOf((submission.getProblem().getMemoryLimitBytes() + 1023) / 1024)
+        );
     }
 
     private void test(Submission submission) {
@@ -136,9 +182,11 @@ public class SubmissionService {
 
                 switch (submission.getLanguage().getLanguage()) {
                     case "CPP" -> Runtime.getRuntime().exec(new String[]{
+                            limitsCommand(submission),
                             CPP_RUN_COMMAND.formatted(WORKDIR_FILE.formatted(submission.getId().toString(), CPP_PROGRAM_FILE))
                     });
                     case "JAVA" -> Runtime.getRuntime().exec(new String[]{
+                            limitsCommand(submission),
                             JAVA_RUN_COMMAND.formatted(WORKDIR_FILE.formatted(submission.getId().toString(), JAVA_SOURCE_CODE_FILE))
                     });
                     default ->
@@ -158,9 +206,18 @@ public class SubmissionService {
         }
     }
 
+    @Transactional
+    protected Optional<Submission> reserveSubmission() {
+        Optional<Submission> submission = submissionRepository.findSubmissionByStatusStatus(SubmissionStatus.Status.NEW.name());
+        if (submission.isEmpty()) return Optional.empty();
+        SubmissionStatus status = submissionStatusRepository.findByStatus(SubmissionStatus.Status.TESTING.name()).orElseThrow();
+        submission.get().setStatus(status);
+        return Optional.of(submissionRepository.save(submission.get()));
+    }
 
+    @Transactional
     public void reserveAndTestSubmission() {
-        submissionRepository.reserveSubmission().ifPresent(submission -> {
+        reserveSubmission().ifPresent(submission -> {
             cleanUp(submission);
             createWorkDirectory(submission);
             compile(submission);

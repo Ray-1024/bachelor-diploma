@@ -7,11 +7,11 @@ import ray1024.submissiontestingworker.service.SubmissionService;
 
 @Component
 @AllArgsConstructor
-public class DropLongTestingSubmissionsTask {
+public class FlushLongTestingSubmissionsTask {
     private final SubmissionService taskService;
 
     @Scheduled(fixedDelay = 20000)
-    public void dropLongTestingSubmissions() {
-        taskService.dropLongTestingSubmissions();
+    public void flushLongTestingSubmissions() {
+        taskService.flushLongTestingSubmissions();
     }
 }

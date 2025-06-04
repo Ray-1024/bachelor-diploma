@@ -1,167 +1,189 @@
 <template>
-  <article class="article">
-    <header class="article-header">
-      <h1 class="article-title">{{ title }}</h1>
-
-      <div v-if="meta" class="article-meta">
-        <span v-if="meta.author" class="article-author">
-          By {{ meta.author }}
-        </span>
-        <span v-if="meta.date" class="article-date">
-          {{ formatDate(meta.date) }}
-        </span>
-        <span v-if="meta.readingTime" class="article-reading-time">
-          {{ meta.readingTime }} min read
-        </span>
+  <div class="markdown-reader">
+    <div class="submission-header">
+      <h1>{{ props.article.title }}</h1>
+      <div class="article-meta">
+        <span class="author">{{ props.article.authorUsername }}</span>
+        <span class="date">{{ formatDate(props.article.creationDate) }}</span>
       </div>
-
-      <img
-          v-if="featuredImage"
-          :src="featuredImage"
-          :alt="featuredImageAlt || 'Featured image'"
-          class="article-featured-image"
-      >
-    </header>
-
-    <div class="article-content" v-html="content"></div>
-
-    <footer v-if="tags && tags.length" class="article-footer">
-      <div class="article-tags">
-        <span v-for="tag in tags" :key="tag" class="article-tag">
-          {{ tag }}
-        </span>
+      <div>
+        <Tag v-for="tag in props.article.tags" @click="emitSearchProblem({tags:[client.tags.getById(tag)]})">
+          {{ client.tags.getById(tag).tag }}
+        </Tag>
       </div>
-    </footer>
-  </article>
+    </div>
+    <div class="markdown-content" v-html="compiledMarkdown()"></div>
+  </div>
 </template>
 
-<script>
-export default {
-  name: 'Article',
-  props: {
-    title: {
-      type: String,
-      required: true
-    },
-    content: {
-      type: String,
-      required: true
-    },
-    meta: {
-      type: Object,
-      default: () => ({
-        author: null,
-        date: null,
-        readingTime: null
-      })
-    },
-    featuredImage: {
-      type: String,
-      default: null
-    },
-    featuredImageAlt: {
-      type: String,
-      default: null
-    },
-    tags: {
-      type: Array,
-      default: () => []
-    }
-  },
-  methods: {
-    formatDate(date) {
-      if (!date) return '';
+<script setup lang="ts">
+import {marked} from 'marked';
+import DOMPurify from 'dompurify';
+import {ArticleDto, TagsDto} from "@/client/data";
+import {client} from "@/client/client";
+import Tag from "@/components/tag/Tag.vue";
 
-      // You can replace this with a more sophisticated date formatting library
-      // like date-fns or moment.js if needed
-      const options = { year: 'numeric', month: 'long', day: 'numeric' };
-      return new Date(date).toLocaleDateString(undefined, options);
-    }
-  }
+const props = defineProps<{
+  article: ArticleDto
+}>();
+
+const emit = defineEmits(['searchProblem']);
+
+function emitSearchProblem(params: TagsDto) {
+  emit('searchProblem', params);
+}
+
+function compiledMarkdown() {
+  marked.setOptions({
+    gfm: true,
+    breaks: true,
+    smartypants: true
+  });
+  return DOMPurify.sanitize(marked(props.article.article));
+}
+
+function formatDate(dateString: Date) {
+  const options: Intl.DateTimeFormatOptions = {year: 'numeric', month: 'short', day: 'numeric'};
+  return dateString.toLocaleDateString(undefined, options);
 }
 </script>
 
 <style scoped>
-.article {
+.markdown-reader {
   max-width: 800px;
   margin: 0 auto;
-  padding: 2rem;
+  padding: 2rem 1rem;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
   line-height: 1.6;
   color: #333;
 }
 
-.article-header {
+.submission-header {
   margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #eaecef;
 }
 
-.article-title {
+.submission-header h1 {
+  margin: 0 0 0.5rem 0;
   font-size: 2.5rem;
-  margin-bottom: 1rem;
-  line-height: 1.2;
+  font-weight: 600;
+  color: #24292e;
 }
 
 .article-meta {
   display: flex;
   gap: 1rem;
-  margin-bottom: 1.5rem;
-  color: #666;
   font-size: 0.9rem;
+  color: #586069;
 }
 
-.article-featured-image {
-  width: 100%;
-  max-height: 400px;
-  object-fit: cover;
-  border-radius: 4px;
-  margin-bottom: 1.5rem;
+.author {
+  font-weight: 500;
 }
 
-.article-content {
+.date {
+  opacity: 0.8;
+}
+
+.markdown-content {
   font-size: 1.1rem;
+  line-height: 1.8;
 }
 
-.article-content >>> p {
-  margin-bottom: 1.5rem;
+.markdown-content >>> h1,
+.markdown-content >>> h2,
+.markdown-content >>> h3,
+.markdown-content >>> h4,
+.markdown-content >>> h5,
+.markdown-content >>> h6 {
+  margin-top: 1.5em;
+  margin-bottom: 1em;
+  font-weight: 600;
+  color: #24292e;
 }
 
-.article-content >>> h2 {
-  font-size: 1.8rem;
-  margin: 2rem 0 1rem;
+.markdown-content >>> h1 {
+  font-size: 2em;
+  border-bottom: 1px solid #eaecef;
+  padding-bottom: 0.3em;
 }
 
-.article-content >>> h3 {
-  font-size: 1.5rem;
-  margin: 1.5rem 0 0.75rem;
+.markdown-content >>> h2 {
+  font-size: 1.5em;
+  border-bottom: 1px solid #eaecef;
+  padding-bottom: 0.3em;
 }
 
-.article-content >>> a {
-  color: #0066cc;
+.markdown-content >>> p {
+  margin-bottom: 1em;
+}
+
+.markdown-content >>> a {
+  color: #0366d6;
+  text-decoration: none;
+}
+
+.markdown-content >>> a:hover {
   text-decoration: underline;
 }
 
-.article-content >>> img {
+.markdown-content >>> img {
   max-width: 100%;
   height: auto;
-  margin: 1rem 0;
+  border-radius: 6px;
+  margin: 1em 0;
 }
 
-.article-footer {
-  margin-top: 3rem;
-  padding-top: 1.5rem;
-  border-top: 1px solid #eee;
+.markdown-content >>> pre {
+  background-color: #f6f8fa;
+  border-radius: 6px;
+  padding: 1em;
+  overflow: auto;
+  margin: 1em 0;
 }
 
-.article-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
+.markdown-content >>> code {
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  background-color: rgba(27, 31, 35, 0.05);
+  border-radius: 3px;
+  padding: 0.2em 0.4em;
+  font-size: 85%;
 }
 
-.article-tag {
-  background: #f0f0f0;
-  padding: 0.25rem 0.75rem;
-  border-radius: 20px;
-  font-size: 0.85rem;
-  color: #555;
+.markdown-content >>> blockquote {
+  border-left: 4px solid #dfe2e5;
+  color: #6a737d;
+  padding: 0 1em;
+  margin: 0 0 1em 0;
+}
+
+.markdown-content >>> ul,
+.markdown-content >>> ol {
+  margin-bottom: 1em;
+  padding-left: 2em;
+}
+
+.markdown-content >>> li {
+  margin-bottom: 0.5em;
+}
+
+.markdown-content >>> table {
+  display: block;
+  width: 100%;
+  overflow: auto;
+  margin: 1em 0;
+  border-collapse: collapse;
+}
+
+.markdown-content >>> table th {
+  font-weight: 600;
+  background-color: #f6f8fa;
+}
+
+.markdown-content >>> table th,
+.markdown-content >>> table td {
+  padding: 0.5em 1em;
+  border: 1px solid #dfe2e5;
 }
 </style>

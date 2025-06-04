@@ -12,6 +12,8 @@
         <option value="$PROJECT_DIR$/problem-service/pom.xml" />
         <option value="$PROJECT_DIR$/article-service/pom.xml" />
         <option value="$PROJECT_DIR$/submission-testing-worker/pom.xml" />
+        <option value="$PROJECT_DIR$/tag-service/pom.xml" />
+        <option value="$PROJECT_DIR$/image-service/pom.xml" />
       </list>
     </option>
   </component>

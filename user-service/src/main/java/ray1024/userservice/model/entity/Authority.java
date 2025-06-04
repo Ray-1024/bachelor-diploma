@@ -23,6 +23,5 @@ public class Authority {
     private Long id;
 
     @Column(unique = true, nullable = false)
-    @Enumerated(EnumType.STRING)
-    private AuthorityEnum authority;
+    private String authority;
 }

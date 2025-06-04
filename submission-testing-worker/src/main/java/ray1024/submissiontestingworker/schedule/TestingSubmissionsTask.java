@@ -10,7 +10,7 @@ import ray1024.submissiontestingworker.service.SubmissionService;
 public class TestingSubmissionsTask {
     private final SubmissionService taskService;
 
-    @Scheduled(fixedDelay = 1000)
+    @Scheduled(fixedDelay = 3000)
     public void testingSubmissions() {
         taskService.reserveAndTestSubmission();
     }

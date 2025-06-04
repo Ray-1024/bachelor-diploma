@@ -2,8 +2,10 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
+      <module fileurl="file://$PROJECT_DIR$/article-service/article-service.iml" filepath="$PROJECT_DIR$/article-service/article-service.iml" />
       <module fileurl="file://$PROJECT_DIR$/bachelor-diploma.iml" filepath="$PROJECT_DIR$/bachelor-diploma.iml" />
       <module fileurl="file://$PROJECT_DIR$/frontend.iml" filepath="$PROJECT_DIR$/frontend.iml" />
+      <module fileurl="file://$PROJECT_DIR$/problem-service/problem-service.iml" filepath="$PROJECT_DIR$/problem-service/problem-service.iml" />
     </modules>
   </component>
 </project>

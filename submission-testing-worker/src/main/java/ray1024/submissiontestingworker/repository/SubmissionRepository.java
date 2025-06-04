@@ -18,8 +18,7 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
     @Query("UPDATE Submission t SET t.status = 'NEW'" +
             "WHERE t.status = 'TESTING' " +
             "AND t.lastStatusChanged >= :timeThreshold")
-    void dropLongTestingSubmissions(@Param("timeThreshold") Instant timeThreshold);
+    void flushLongTestingSubmissions(@Param("timeThreshold") Instant timeThreshold);
 
-    @Query("")
-    Optional<Submission> reserveSubmission();
+    Optional<Submission> findSubmissionByStatusStatus(String status);
 }
