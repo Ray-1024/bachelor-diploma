@@ -22,10 +22,11 @@ public class ArticleController {
     public ArticlesResponse getAll(
             @PathParam("page") @DefaultValue("1") Integer page,
             @PathParam("size") @DefaultValue("20") Integer size,
+            @PathParam("search") @DefaultValue("") String search,
             @PathParam("tags") @DefaultValue("") List<Long> tags
     ) {
         return ArticlesResponse.builder()
-                .articles(articleService.getAllByTags(tags, page, size))
+                .articles(articleService.getAllByTags(search, tags, page, size))
                 .build();
     }
 
@@ -33,12 +34,13 @@ public class ArticleController {
     public ArticlesResponse getAllByUser(
             @PathParam("page") @DefaultValue("1") Integer page,
             @PathParam("size") @DefaultValue("20") Integer size,
+            @PathParam("search") @DefaultValue("") String search,
             @PathParam("tags") @DefaultValue("") List<Long> tags
     ) {
         Claims claims = (Claims) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         return ArticlesResponse.builder()
                 .articles(articleService.getAllByTagsAndAuthor(
-                        claims.get("id", Long.class), tags, page, size))
+                        claims.get("id", Long.class), search, tags, page, size))
                 .build();
     }
 

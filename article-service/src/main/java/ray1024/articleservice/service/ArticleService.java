@@ -20,8 +20,10 @@ import java.util.Objects;
 public class ArticleService {
     private ArticleRepository articleRepository;
 
-    public List<Article> getAllByTags(List<Long> tags, int page, int size) {
-        return articleRepository.findAllByTagsContaining(
+    public List<Article> getAllByTags(String search, List<Long> tags, int page, int size) {
+        return articleRepository.findAllByTitleOrArticleContainingIgnoreCaseAndTagsContaining(
+                search,
+                search,
                 tags,
                 PageRequest.of(
                         page,
@@ -32,9 +34,11 @@ public class ArticleService {
         ).getContent();
     }
 
-    public List<Article> getAllByTagsAndAuthor(Long authorId, List<Long> tags, int page, int size) {
-        return articleRepository.findAllByAuthorIdAndTagsContaining(
+    public List<Article> getAllByTagsAndAuthor(Long authorId, String search, List<Long> tags, int page, int size) {
+        return articleRepository.findAllByAuthorIdAndTitleOrArticleContainingIgnoreCaseAndTagsContaining(
                 authorId,
+                search,
+                search,
                 tags,
                 PageRequest.of(
                         page,

@@ -19,12 +19,12 @@ import java.util.List;
 public class ProblemService {
     private final ProblemRepository problemRepository;
 
-    public List<Problem> getAll(List<Long> tags, int page, int size) {
-        return problemRepository.findAllByTagsContaining(tags, Pageable.ofSize(size).withPage(page)).getContent();
+    public List<Problem> getAll(String text, List<Long> tags, int page, int size) {
+        return problemRepository.findAllByTagsContaining(text, text, tags, Pageable.ofSize(size).withPage(page)).getContent();
     }
 
-    public List<Problem> getAllByAuthorId(long authorId, List<Long> tags, int page, int size) {
-        return problemRepository.findAllByAuthorIdAndTagsContaining(authorId, tags, Pageable.ofSize(size).withPage(page)).getContent();
+    public List<Problem> getAllByAuthorId(long authorId, String text, List<Long> tags, int page, int size) {
+        return problemRepository.findAllByAuthorIdAndTagsContaining(authorId, text, text, tags, Pageable.ofSize(size).withPage(page)).getContent();
     }
 
 

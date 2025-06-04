@@ -23,12 +23,13 @@ public class ProblemController {
     public ProblemsResponse getAll(
             @PathParam("page") @DefaultValue("1") Integer page,
             @PathParam("size") @DefaultValue("20") Integer size,
+            @PathParam("search") @DefaultValue("") String search,
             @PathParam("tags") @DefaultValue("") List<Long> tags
     ) {
         if (Objects.isNull(page)) page = 1;
         if (Objects.isNull(size)) size = 5;
         return ProblemsResponse.builder()
-                .problems(problemService.getAll(tags, page, size))
+                .problems(problemService.getAll(search, tags, page, size))
                 .page(page)
                 .size(size)
                 .build();
@@ -38,6 +39,7 @@ public class ProblemController {
     public ProblemsResponse getAllByAuthorId(
             @PathParam("page") @DefaultValue("1") Integer page,
             @PathParam("size") @DefaultValue("20") Integer size,
+            @PathParam("search") @DefaultValue("") String search,
             @PathParam("tags") @DefaultValue("") List<Long> tags
     ) {
         if (Objects.isNull(page)) page = 1;
@@ -46,7 +48,7 @@ public class ProblemController {
         return ProblemsResponse.builder()
                 .problems(problemService.getAllByAuthorId(
                         claims.get("id", Long.class),
-                        tags, page, size))
+                        search, tags, page, size))
                 .page(page)
                 .size(size)
                 .build();

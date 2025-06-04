@@ -12,7 +12,7 @@ public interface ProblemRepository extends JpaRepository<Problem, Long> {
 
     Page<Problem> findAll(@NonNull Pageable pageable);
 
-    Page<Problem> findAllByTagsContaining(List<Long> tags, Pageable pageable);
+    Page<Problem> findAllByTagsContaining(String title, String description, List<Long> tags, Pageable pageable);
 
-    Page<Problem> findAllByAuthorIdAndTagsContaining(Long authorId, List<Long> tags, Pageable pageable);
+    Page<Problem> findAllByAuthorIdAndTagsContaining(Long authorId, String title, String description, List<Long> tags, Pageable pageable);
 }

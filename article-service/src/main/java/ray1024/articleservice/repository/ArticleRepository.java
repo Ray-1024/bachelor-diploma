@@ -10,7 +10,7 @@ import java.util.List;
 public interface ArticleRepository extends JpaRepository<Article, Long> {
     Page<Article> findAll(Pageable pageable);
 
-    Page<Article> findAllByTagsContaining(List<Long> tags, Pageable pageable);
+    Page<Article> findAllByTitleOrArticleContainingIgnoreCaseAndTagsContaining(String title, String article, List<Long> tags, Pageable pageable);
 
-    Page<Article> findAllByAuthorIdAndTagsContaining(Long authorId, List<Long> tags, Pageable pageable);
+    Page<Article> findAllByAuthorIdAndTitleOrArticleContainingIgnoreCaseAndTagsContaining(Long authorId, String title, String article, List<Long> tags, Pageable pageable);
 }
